@@ -430,6 +430,7 @@ MonoBehaviour:
   RotString: {fileID: 2103943496}
   PosString: {fileID: 1121462222}
   OutputVals: {fileID: 79951844}
+  RotPosEffect: 0
   position: {x: 0, y: 0}
   velocity: {x: 1, y: 0}
   acceleration: {x: 0, y: 0}
@@ -929,6 +930,7 @@ MonoBehaviour:
   RotString: {fileID: 2103943496}
   PosString: {fileID: 1121462222}
   OutputVals: {fileID: 489884122}
+  RotPosEffect: 1
   position: {x: 0, y: 0}
   velocity: {x: 1, y: 0}
   acceleration: {x: 0, y: 0}
@@ -2629,6 +2631,7 @@ MonoBehaviour:
   RotString: {fileID: 2103943496}
   PosString: {fileID: 1121462222}
   OutputVals: {fileID: 695429876}
+  RotPosEffect: 0
   position: {x: 0, y: 0}
   velocity: {x: 1, y: 0}
   acceleration: {x: 0, y: 0}

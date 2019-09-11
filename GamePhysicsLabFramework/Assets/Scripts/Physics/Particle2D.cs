@@ -8,6 +8,7 @@ public class Particle2D : MonoBehaviour
     public Text RotString;
     public Text PosString;
     public Text OutputVals;
+    public bool RotPosEffect;   //display to buttons
 
     //lab 1 step 1
     public Vector2 position, velocity, acceleration, incrementAccel, incrementVel;
@@ -134,7 +135,6 @@ public class Particle2D : MonoBehaviour
     {
         zeroObjectPosAndRot();
         rotType = !rotType;
-
         
     }
 
@@ -180,26 +180,29 @@ public class Particle2D : MonoBehaviour
             updateRotationKinematic(Time.fixedDeltaTime);
         }
 
-        if (posType)
+        if (RotPosEffect)
         {
-            PosString.text = "Pos EE: ";
-            //PosString.text += acceleration.x;
-        }
-        else
-        {
-            PosString.text = "Pos K: ";
-            //PosString.text += acceleration.x;
-        }
+            if (posType)
+            {
+                PosString.text = "Pos EE: ";
+                PosString.text += position.x;
+            }
+            else
+            {
+                PosString.text = "Pos K: ";
+                PosString.text += position.x;
+            }
 
-        if (rotType)
-        {
-            RotString.text = "Rot EE: ";
-            //RotString.text += rotation;
-        }
-        else
-        {
-            RotString.text = "Rot K: ";
-            //RotString.text += rotation;
+            if (rotType)
+            {
+                RotString.text = "Rot EE: ";
+                RotString.text += rotation;
+            }
+            else
+            {
+                RotString.text = "Rot K: ";
+                RotString.text += rotation;
+            }
         }
     }
 
@@ -209,8 +212,8 @@ public class Particle2D : MonoBehaviour
         debugMode = false;
         rotType = true;
         posType = true;
-        PosString.text = "Pos EE";
-        RotString.text = "Rot EE";
+        //PosString.text = "Pos EE";
+        //RotString.text = "Rot EE";
         startPos = this.transform.position;
         position = startPos;
 
