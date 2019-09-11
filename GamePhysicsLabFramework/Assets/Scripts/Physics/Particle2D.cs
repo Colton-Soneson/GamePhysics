@@ -7,10 +7,13 @@ public class Particle2D : MonoBehaviour
 {
     public Text RotString;
     public Text PosString;
+    public Text OutputVals;
+    public bool RotPosEffect;   //display to buttons
 
     //lab 1 step 1
     public Vector2 position, velocity, acceleration, incrementAccel, incrementVel;
     public float rotation, angVelocity, angAcceleration, incrementAV, incrementAngAccel;
+    private Vector2 startPos;
 
     //lab 2 step 1
     public float startingMass;
@@ -108,17 +111,15 @@ public class Particle2D : MonoBehaviour
 
     void zeroObjectPosAndRot()
     {
-        position = Vector2.zero;
-        acceleration = Vector2.zero;
+        //acceleration.x = -Mathf.Sin(Time.fixedTime);
+
+        //velocity.x = 1;
+        //angVelocity = 1.0f;
 
         rotation = 0.0f;
-        angAcceleration = 0.0f;
-
-        velocity.x = 1;
-        angVelocity = 1;
-
-        transform.rotation = Quaternion.Euler(0.0f,0.0f,1.0f);
-        transform.position = position;
+        position = startPos;
+        //transform.rotation = Quaternion.Euler(0.0f,0.0f,1.0f);
+        //transform.position = position;
 
 
     }
@@ -127,42 +128,25 @@ public class Particle2D : MonoBehaviour
     {
         zeroObjectPosAndRot();
         posType = !posType;
-        if (posType)
-        {
-            PosString.text = "Pos EE";
-        }
-        else
-        {
-            PosString.text = "Pos K";
-        }
+        
     }
 
     public void swapRotMode()
     {
         zeroObjectPosAndRot();
         rotType = !rotType;
-
-        if(rotType)
-        {
-            RotString.text = "Rot EE";
-        }
-        else
-        {
-            RotString.text = "Rot K";
-        }
+        
     }
 
-    public void increaseAVandV()
-    {
-        angVelocity += incrementAV;
-        //velocity.x += incrementVel.x;
-    }
+    public void increaseAV() { angVelocity += incrementAV; }
+    public void decreaseAV() { angVelocity -= incrementAV; }
 
-    public void increaseAccelandAngAccell()
-    {
-        //acceleration += incrementAccel;
-        angAcceleration += incrementAngAccel;
-    }
+    public void increaseAngAccell() { angAcceleration += incrementAngAccel; }
+
+    public void decreaseAngAccel() { angAcceleration -= incrementAngAccel; }
+    public void increaseAccel() { incrementAccel.x++; }
+
+    public void decreaseAccel() { incrementAccel.x--; }
 
     void userInput()
     {
@@ -195,6 +179,31 @@ public class Particle2D : MonoBehaviour
         {
             updateRotationKinematic(Time.fixedDeltaTime);
         }
+
+        if (RotPosEffect)
+        {
+            if (posType)
+            {
+                PosString.text = "Pos EE: ";
+                PosString.text += position.x;
+            }
+            else
+            {
+                PosString.text = "Pos K: ";
+                PosString.text += position.x;
+            }
+
+            if (rotType)
+            {
+                RotString.text = "Rot EE: ";
+                RotString.text += rotation;
+            }
+            else
+            {
+                RotString.text = "Rot K: ";
+                RotString.text += rotation;
+            }
+        }
     }
 
     // Start is called before the first frame update
@@ -203,8 +212,10 @@ public class Particle2D : MonoBehaviour
         debugMode = false;
         rotType = true;
         posType = true;
-        PosString.text = "Pos EE";
-        RotString.text = "Rot EE";
+        //PosString.text = "Pos EE";
+        //RotString.text = "Rot EE";
+        startPos = this.transform.position;
+        position = startPos;
 
         SetMass(startingMass);
     }
@@ -226,7 +237,8 @@ public class Particle2D : MonoBehaviour
         transform.rotation = Quaternion.Euler(0.0f, 0.0f, rotation);
 
         //step 4
-        acceleration.x = -Mathf.Sin(Time.time);       //might need this back in
+        acceleration.x = -Mathf.Sin(Time.fixedTime) * incrementAccel.x;       //might need this back in
+        OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
 
         //lab 2 step 4
         //f_gravity: f = mg
