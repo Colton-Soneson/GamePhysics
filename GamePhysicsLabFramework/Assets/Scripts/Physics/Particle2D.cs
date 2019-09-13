@@ -46,8 +46,6 @@ public class Particle2D : MonoBehaviour
     }
 
     private bool debugMode;
-    //private int rotType;
-    //private int posType;
     bool rotType;
     bool posType;
 
@@ -140,12 +138,9 @@ public class Particle2D : MonoBehaviour
 
     public void increaseAV() { angVelocity += incrementAV; }
     public void decreaseAV() { angVelocity -= incrementAV; }
-
     public void increaseAngAccell() { angAcceleration += incrementAngAccel; }
-
     public void decreaseAngAccel() { angAcceleration -= incrementAngAccel; }
     public void increaseAccel() { incrementAccel.x++; }
-
     public void decreaseAccel() { incrementAccel.x--; }
 
     void userInput()
@@ -212,8 +207,6 @@ public class Particle2D : MonoBehaviour
         debugMode = false;
         rotType = true;
         posType = true;
-        //PosString.text = "Pos EE";
-        //RotString.text = "Rot EE";
         startPos = this.transform.position;
         position = startPos;
 
@@ -231,19 +224,17 @@ public class Particle2D : MonoBehaviour
 
         process();
 
-        //UpdateAcceleration();
+        UpdateAcceleration();
 
         transform.position = position;
         transform.rotation = Quaternion.Euler(0.0f, 0.0f, rotation);
 
-        //step 4
-        acceleration.x = -Mathf.Sin(Time.fixedTime) * incrementAccel.x;       //might need this back in
-        OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
-
         //lab 2 step 4
         //f_gravity: f = mg
-        //Vector2 f_gravity = mass * new Vector2(0.0f, -9.8f);
-        //AddForce(f_gravity);
-        //AddForce(ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up));
+        Vector2 f_gravity = mass * new Vector2(0.0f, -9.8f);
+        AddForce(f_gravity);
+        AddForce(ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up));
+
+        OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
     }
 }
