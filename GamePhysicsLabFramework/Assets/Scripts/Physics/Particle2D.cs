@@ -10,6 +10,8 @@ public class Particle2D : MonoBehaviour
     public Text OutputVals;
     public bool RotPosEffect;   //display to buttons
 
+    Renderer rend;
+
     //lab 1 step 1
     public Vector2 position, velocity, acceleration, incrementAccel, incrementVel;
     public float rotation, angVelocity, angAcceleration, incrementAV, incrementAngAccel;
@@ -28,6 +30,20 @@ public class Particle2D : MonoBehaviour
 
     //lab 2 step 2
     Vector2 force;
+    private Vector2 unitSupportNormal;
+    public Vector2 f_Opposing;                  //adjust this force
+    public Vector2 fluidVelocity;               //like the air
+    public float frictionCoeffecient_Static;
+    public float frictionCoeffecient_Kinetic;
+    public float fluidDensity;
+    public float dragCoeffecient;
+    public float springStiffnessCoeffecient;
+    public float springRestingLength;
+    public GameObject NormalForceUnit;
+    public GameObject Spring;
+
+
+
     public void AddForce(Vector2 newForce)
     {
         //D'Alembert
@@ -44,6 +60,7 @@ public class Particle2D : MonoBehaviour
         //clear the forces so we dont just keep accumulating force nonstop
         force.Set(0.0f, 0.0f);
     }
+
 
     private bool debugMode;
     bool rotType;
@@ -210,6 +227,8 @@ public class Particle2D : MonoBehaviour
         startPos = this.transform.position;
         position = startPos;
 
+        rend = this.gameObject.GetComponent<Renderer>();
+        unitSupportNormal = new Vector2(Mathf.Cos(NormalForceUnit.GetComponent<Transform>().rotation.z), Mathf.Sin(NormalForceUnit.GetComponent<Transform>().rotation.z));
         SetMass(startingMass);
     }
 
@@ -231,10 +250,34 @@ public class Particle2D : MonoBehaviour
 
         //lab 2 step 4
         //f_gravity: f = mg
-        Vector2 f_gravity = mass * new Vector2(0.0f, -9.8f);
+        Vector2 f_gravity = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
         AddForce(f_gravity);
-        AddForce(ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up));
 
-        OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
+        Vector2 f_surfaceNormal = ForceGenerator.GenerateForce_normal(f_gravity, unitSupportNormal);
+        //AddForce(f_surfaceNormal);
+
+        Vector2 f_sliding = ForceGenerator.GenerateForce_sliding(f_gravity, f_surfaceNormal);
+        AddForce(f_sliding);
+
+        //Vector2 f_frictionStatic = ForceGenerator.GenerateForce_friction_static(f_surfaceNormal, f_Opposing, frictionCoeffecient_Static);
+        //AddForce(f_frictionStatic);
+
+        //Vector2 f_frictionKinetic = ForceGenerator.GenerateForce_friction_kinetic(f_surfaceNormal, velocity, frictionCoeffecient_Kinetic);
+        //AddForce(f_frictionKinetic);
+
+        float objectAreaCrossSection = rend.bounds.size.x * rend.bounds.size.y;
+        Vector2 f_drag = ForceGenerator.GenerateForce_drag(velocity, fluidVelocity, fluidDensity, objectAreaCrossSection, dragCoeffecient);
+        AddForce(f_drag);
+
+        Vector2 springAnchorPosition = Spring.GetComponent<Transform>().position;
+        Vector2 f_spring = ForceGenerator.GenerateForce_spring(position, springAnchorPosition, springRestingLength, springStiffnessCoeffecient);
+        AddForce(f_spring);
+
+        //Debug.Log("Position = " + position + "   NormalVect = " + unitSupportNormal);
+        Debug.Log("force = " + force + "   NormalForce = " + f_surfaceNormal);
+
+
+        //output to screen
+        //OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
     }
 }
