@@ -5,6 +5,17 @@ using UnityEngine.UI;
 
 public class Particle2D : MonoBehaviour
 {
+    public enum ForceType
+    {
+        GRAVITY,
+        SLIDING,
+        FRICTION,
+        DRAG,
+        SPRING
+    };
+
+    public ForceType typeOfForce;
+
     public Text RotString;
     public Text PosString;
     public Text OutputVals;
@@ -33,11 +44,12 @@ public class Particle2D : MonoBehaviour
     private Vector2 unitSupportNormal;
     public Vector2 f_Opposing;                  //adjust this force
     public Vector2 fluidVelocity;               //like the air
+    public float frictionCoeffecient_Combined;
     public float frictionCoeffecient_Static;
     public float frictionCoeffecient_Kinetic;
-    public float fluidDensity;
     public float dragCoeffecient;
     public float springStiffnessCoeffecient;
+    public float fluidDensity;
     public float springRestingLength;
     public GameObject NormalForceUnit;
     public GameObject Spring;
@@ -192,6 +204,7 @@ public class Particle2D : MonoBehaviour
             updateRotationKinematic(Time.fixedDeltaTime);
         }
 
+        /*
         if (RotPosEffect)
         {
             if (posType)
@@ -216,6 +229,7 @@ public class Particle2D : MonoBehaviour
                 RotString.text += rotation;
             }
         }
+        */
     }
 
     // Start is called before the first frame update
@@ -227,18 +241,92 @@ public class Particle2D : MonoBehaviour
         startPos = this.transform.position;
         position = startPos;
 
+        SetForceValues();
+
         rend = this.gameObject.GetComponent<Renderer>();
-        unitSupportNormal = new Vector2(Mathf.Cos(NormalForceUnit.GetComponent<Transform>().rotation.z), Mathf.Sin(NormalForceUnit.GetComponent<Transform>().rotation.z));
+        float Rx = Mathf.Cos((NormalForceUnit.GetComponent<Transform>().rotation.eulerAngles.z) * Mathf.PI / 180);
+        float Ry = Mathf.Sin((NormalForceUnit.GetComponent<Transform>().rotation.eulerAngles.z) * Mathf.PI / 180);
+        //Debug.Log("x = " + Rx + "   y = " + Ry + "  rot = " + NormalForceUnit.GetComponent<Transform>().rotation.eulerAngles.z);
+        unitSupportNormal = new Vector2(Rx, Ry);
         SetMass(startingMass);
+    }
+
+    void ProcessForces()
+    {
+        switch(typeOfForce)
+        {
+
+            case ForceType.GRAVITY:
+                Vector2 f_gravity = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
+                AddForce(f_gravity);
+                break;
+
+
+            case ForceType.SLIDING:
+                Vector2 f_gravity_slid = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
+                AddForce(f_gravity_slid);
+
+                Vector2 f_surfaceNormal = ForceGenerator.GenerateForce_normal(f_gravity_slid, unitSupportNormal);
+                AddForce(f_surfaceNormal);
+                break;
+
+
+            case ForceType.FRICTION:
+                Vector2 f_gravity_fric = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
+                AddForce(f_gravity_fric);
+
+                Vector2 f_surfaceNormal_fric = ForceGenerator.GenerateForce_normal(f_gravity_fric, unitSupportNormal);
+                AddForce(f_surfaceNormal_fric);
+
+                Vector2 f_friction = ForceGenerator.GenerateForce_friction(f_surfaceNormal_fric, f_Opposing, velocity, frictionCoeffecient_Combined);
+                AddForce(f_friction);
+                break;
+
+
+            case ForceType.DRAG:
+                float objectAreaCrossSection = rend.bounds.size.z * rend.bounds.size.y;
+                dragCoeffecient = calculateDragCoefficient();
+                Vector2 f_drag = ForceGenerator.GenerateForce_drag(velocity, fluidVelocity, fluidDensity, objectAreaCrossSection, dragCoeffecient);
+                AddForce(f_drag);
+                break;
+
+
+            case ForceType.SPRING:
+                Vector2 f_gravity_spring = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
+                AddForce(f_gravity_spring);
+
+                Vector2 f_spring = ForceGenerator.GenerateForce_spring(position, NormalForceUnit.GetComponent<Transform>().position, springRestingLength, springStiffnessCoeffecient);
+                AddForce(f_spring);
+                break;
+        }
+    }
+
+    void SetForceValues()
+    {
+        switch (typeOfForce)
+        {
+            case ForceType.GRAVITY:
+
+                break;
+            case ForceType.SLIDING:
+
+                break;
+            case ForceType.FRICTION:
+
+                break;
+            case ForceType.DRAG:
+
+                break;
+            case ForceType.SPRING:
+
+                break;
+        }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        //step 3
-        //updatePositionEulerExplicit(Time.fixedDeltaTime);
-        //transform.position = position;
-
+  
         userInput();
 
         process();
@@ -248,36 +336,27 @@ public class Particle2D : MonoBehaviour
         transform.position = position;
         transform.rotation = Quaternion.Euler(0.0f, 0.0f, rotation);
 
-        //lab 2 step 4
-        //f_gravity: f = mg
-        Vector2 f_gravity = ForceGenerator.GenerateForce_Gravity(mass, -9.8f, Vector2.up);       //mass * new Vector2(0.0f, -9.8f);
-        AddForce(f_gravity);
+        ProcessForces();
 
-        Vector2 f_surfaceNormal = ForceGenerator.GenerateForce_normal(f_gravity, unitSupportNormal);
-        //AddForce(f_surfaceNormal);
-
-        Vector2 f_sliding = ForceGenerator.GenerateForce_sliding(f_gravity, f_surfaceNormal);
-        AddForce(f_sliding);
-
-        //Vector2 f_frictionStatic = ForceGenerator.GenerateForce_friction_static(f_surfaceNormal, f_Opposing, frictionCoeffecient_Static);
-        //AddForce(f_frictionStatic);
-
-        //Vector2 f_frictionKinetic = ForceGenerator.GenerateForce_friction_kinetic(f_surfaceNormal, velocity, frictionCoeffecient_Kinetic);
-        //AddForce(f_frictionKinetic);
-
-        float objectAreaCrossSection = rend.bounds.size.x * rend.bounds.size.y;
-        Vector2 f_drag = ForceGenerator.GenerateForce_drag(velocity, fluidVelocity, fluidDensity, objectAreaCrossSection, dragCoeffecient);
-        AddForce(f_drag);
-
-        Vector2 springAnchorPosition = Spring.GetComponent<Transform>().position;
-        Vector2 f_spring = ForceGenerator.GenerateForce_spring(position, springAnchorPosition, springRestingLength, springStiffnessCoeffecient);
-        AddForce(f_spring);
-
-        //Debug.Log("Position = " + position + "   NormalVect = " + unitSupportNormal);
-        Debug.Log("force = " + force + "   NormalForce = " + f_surfaceNormal);
-
-
-        //output to screen
         //OutputVals.text = this.gameObject.name + "  AngAcc: " + (angAcceleration).ToString() + "   RotDegrees: " + (rotation % 360).ToString() + "  AccelX: " + ((acceleration.x).ToString()) + "  VelX: " + ((velocity.x).ToString());
+    }
+
+    public float calculateDragCoefficient()
+    {
+        float surfaceArea = 2 * (rend.bounds.size.x * rend.bounds.size.y) + 2 * (rend.bounds.size.x * rend.bounds.size.z) + 2 * (rend.bounds.size.z * rend.bounds.size.y);
+
+        float CL = ForceGenerator.CharacteristicLength(rend.bounds.size.x * rend.bounds.size.y * rend.bounds.size.z, surfaceArea);
+        float VK = ForceGenerator.Viscosity_Kinematic(ForceGenerator.Viscosity_Dynamic(force.magnitude, rend.bounds.size.x), fluidDensity);
+
+        Debug.Log("SA = " + surfaceArea + "   CL = " + CL + "   VK = " + VK);
+
+        float final = ForceGenerator.dragCoefficientFunc(surfaceArea,
+                                                        rend.bounds.size.z * rend.bounds.size.y,
+                                                        ForceGenerator.BejanNumber(fluidDensity, CL, VK),
+                                                        ForceGenerator.ReynoldsNumber_Kinematic(fluidVelocity.magnitude, CL, VK));
+        //Debug.Log("final = " + final);
+
+        return final;
+
     }
 }

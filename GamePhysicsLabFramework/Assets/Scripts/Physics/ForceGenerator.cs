@@ -4,6 +4,50 @@ using UnityEngine;
 
 public class ForceGenerator
 {
+    public static float CharacteristicLength(float volumeOfSystem, float areaOfSurface)
+    {
+        return volumeOfSystem / areaOfSurface;
+    }
+
+    public static float Viscosity_Kinematic(float dynamicViscosity, float fluidDensity)
+    {
+        return dynamicViscosity / fluidDensity;
+    }
+
+    public static float Viscosity_Dynamic(float force, float area)
+    {
+        if(force == 0)
+        {
+            return  1 / area;
+        }
+        else
+        {
+            return force / area;
+        }
+    }
+
+    public static float ReynoldsNumber_Kinematic(float fluidVelocity, float characteristicLength, float kinematicViscosity)
+    {
+        return ((fluidVelocity * characteristicLength) / kinematicViscosity);
+    }
+
+    public static float BejanNumber(float fluidDensity, float channelLength, float viscosity)
+    {
+        return channelLength * channelLength / fluidDensity * viscosity;
+    }
+
+    public static float dragCoefficientFunc(float wetArea, float frontArea, float bejanNum, float reynoldsNum)
+    {
+        return (wetArea / frontArea) * (bejanNum / reynoldsNum * reynoldsNum);
+    }
+
+    /*
+    public static float ReynoldsNumber_Dynamic(float fluidDensity, float fluidVelocity, float characteristicLength, float dynamicViscosity)
+    {
+
+    }
+    */
+
     public static Vector2 GenerateForce_Gravity(float particleMass, float gravitationalConstant, Vector2 WorldUp)
     {
         // f_gravity: f = mg
@@ -16,7 +60,7 @@ public class ForceGenerator
     {
         // f_normal = proj(f_gravity, surfaceNormal_unit)
 
-        Vector2 f_normal = Vector3.Project(f_gravity, surfaceNormal_unit);
+        Vector2 f_normal = Vector3.Project(-f_gravity, surfaceNormal_unit);
 
         //Vector2 f_normal = (Vector2.Dot(f_gravity, surfaceNormal_unit) / f_gravity.magnitude * f_gravity.magnitude) * f_gravity;
 
@@ -29,6 +73,35 @@ public class ForceGenerator
         // f_sliding = f_gravity + f_normal
         Vector2 f_sliding = f_gravity + f_normal;
         return f_sliding;
+    }
+
+    public static Vector2 GenerateForce_friction(Vector2 f_normal, Vector2 f_opposing, Vector2 particleVelocity, float frictionCoefficient)
+    {
+        Vector2 f_friction;
+
+        
+        if(particleVelocity == Vector2.zero)    //if it aint moving then we do static
+        {
+            if (f_opposing.magnitude < (frictionCoefficient * f_normal.magnitude))
+            {
+                f_friction = -f_opposing;
+            }
+            else if(f_opposing.magnitude > (frictionCoefficient * f_normal.magnitude))
+            {
+                f_friction = -frictionCoefficient * f_normal;
+            }
+            else
+            {
+                f_friction = f_normal;
+            }
+        }
+        else     //otherwise we doin kinetic
+        {
+            f_friction = -frictionCoefficient * f_normal.magnitude * particleVelocity;
+        }
+
+        return f_friction;
+        
     }
 
     
@@ -62,12 +135,11 @@ public class ForceGenerator
     {
         // f_drag = (p * u^2 * area * coeff)/2
 
-        //Vector2 f_drag = (particleVelocity * ( * ) * objectArea_crossSection * objectDragCoefficient) / 2;
 
-        //"Modern Drag Equation" from NASA
-        Vector2 f_drag = objectDragCoefficient * fluidDensity * ((particleVelocity * particleVelocity) / 2) * objectArea_crossSection;
+        Vector2 f_drag = (fluidDensity * (particleVelocity * particleVelocity) * objectArea_crossSection * objectDragCoefficient) / 2;
+        f_drag -= fluidVelocity;
 
-        return f_drag;
+        return -f_drag;
 
     }
     
@@ -75,25 +147,19 @@ public class ForceGenerator
     {
         // f_spring = -coeff*(spring length - spring resting length)
 
-        //anchorPosition + springRestingLength will give full expanded spring at its point in space
+       
 
-        Vector2 springEndPosition = new Vector2(anchorPosition.x + springRestingLength, anchorPosition.y + springRestingLength);
-        Vector2 springEndToAttachedParticle = particlePosition - springEndPosition;
+        Vector2 f_spring = new Vector2(0.0f,0.0f);
 
+        Vector2 springEndToAttachedParticle = particlePosition - anchorPosition;
 
-        if (springEndToAttachedParticle.magnitude < 0.0f)
-        {
+        float length = springEndToAttachedParticle.magnitude - springRestingLength;
 
-            Vector2 f_spring = -springStiffnessCoefficient * (springEndToAttachedParticle.magnitude - springRestingLength) * springEndToAttachedParticle.normalized;
+        f_spring = -springStiffnessCoefficient * length * springEndToAttachedParticle.normalized;
 
-            return f_spring;
-        }
-        else
-        {
-            return Vector2.zero;
-        }
+        //Debug.Log("particlePosition = " + particlePosition + "  anchorPosition  = " + anchorPosition + "   f_spring = " + f_spring + "  springEndToAttachedParticle = " + springEndToAttachedParticle);
 
-        
+        return f_spring;
 
     }
     
