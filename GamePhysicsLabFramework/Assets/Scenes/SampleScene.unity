@@ -3606,7 +3606,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Grav, Norm, NoFrict, DragEast, 45
+  m_Text: 'NoGrav, NoNorm, NoFrict, DragEast, 45
 
 '
 --- !u!222 &2099815556

@@ -79,16 +79,18 @@ public class ForceGenerator
     {
         Vector2 f_friction;
 
+        float fO_mag = f_opposing.magnitude;
+        float max = frictionCoefficient * f_normal.magnitude;
         
         if(particleVelocity == Vector2.zero)    //if it aint moving then we do static
         {
-            if (f_opposing.magnitude < (frictionCoefficient * f_normal.magnitude))
+            if (fO_mag < max)
             {
                 f_friction = -f_opposing;
             }
-            else if(f_opposing.magnitude > (frictionCoefficient * f_normal.magnitude))
+            else if(fO_mag > max)
             {
-                f_friction = -frictionCoefficient * f_normal;
+                f_friction = -f_opposing.normalized * max;   //in the direction of f_opposing quant of max
             }
             else
             {
@@ -97,7 +99,7 @@ public class ForceGenerator
         }
         else     //otherwise we doin kinetic
         {
-            f_friction = -frictionCoefficient * f_normal.magnitude * particleVelocity;
+            f_friction = -max * particleVelocity.normalized;
         }
 
         return f_friction;
@@ -135,9 +137,10 @@ public class ForceGenerator
     {
         // f_drag = (p * u^2 * area * coeff)/2
 
+        //do relative velocity not particle velocity
+        Vector2 relVelocity = particleVelocity - fluidVelocity;
 
-        Vector2 f_drag = (fluidDensity * (particleVelocity * particleVelocity) * objectArea_crossSection * objectDragCoefficient) / 2;
-        f_drag -= fluidVelocity;
+        Vector2 f_drag = (fluidDensity * (relVelocity.magnitude * relVelocity) * objectArea_crossSection * objectDragCoefficient) * 0.5f;
 
         return -f_drag;
 
